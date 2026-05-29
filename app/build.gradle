@@ -17,7 +17,7 @@ def getSwvProperties() {
 def swvProps = getSwvProperties()
 
 android {
-	namespace swvProps.getProperty('build.application.id', 'cz.jankoran.jellyfinuploader')
+	namespace swvProps.getProperty('build.namespace.id', 'mgks.os.swv')
 	compileSdk swvProps.getProperty('build.sdk.compile', '36').toInteger()
 
 	defaultConfig {

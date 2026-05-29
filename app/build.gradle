@@ -1,19 +1,4 @@
-/*
-  Smart WebView v8
-  https://github.com/mgks/Android-SmartWebView
-
-  A modern, open-source WebView wrapper for building advanced hybrid Android apps.
-  Native features, modular plugins, and full customisation—built for developers.
-
-  - Documentation: https://mgks.github.io/Android-SmartWebView/documentation  
-  - Plugins: https://mgks.github.io/Android-SmartWebView/documentation/plugins  
-  - Discussions: https://github.com/mgks/Android-SmartWebView/discussions  
-  - Sponsor the Project: https://github.com/sponsors/mgks  
-
-  MIT License — https://opensource.org/licenses/MIT  
-
-  Mentioning Smart WebView in your project helps others find it and keeps the dev loop alive.
-*/
+import java.util.Base64
 
 plugins {
 	id 'com.android.application'
@@ -25,7 +10,6 @@ def getSwvProperties() {
 	if (propertiesFile.exists()) {
 		properties.load(propertiesFile.newDataInputStream())
 	} else {
-		// Fallback or error if the file is missing
 		throw new GradleException("swv.properties file not found in app/src/main/assets/")
 	}
 	return properties
@@ -33,22 +17,41 @@ def getSwvProperties() {
 def swvProps = getSwvProperties()
 
 android {
-	namespace swvProps.getProperty('build.application.id', 'mgks.os.swv')
+	namespace swvProps.getProperty('build.application.id', 'cz.jankoran.jellyfinuploader')
 	compileSdk swvProps.getProperty('build.sdk.compile', '36').toInteger()
 
 	defaultConfig {
-		applicationId swvProps.getProperty('build.application.id', 'mgks.os.swv')
+		applicationId swvProps.getProperty('build.application.id', 'cz.jankoran.jellyfinuploader')
 		minSdk swvProps.getProperty('build.sdk.min', '24').toInteger()
 		targetSdk swvProps.getProperty('build.sdk.compile', '36').toInteger()
 		versionCode swvProps.getProperty('build.version.code', '1').toInteger()
-		versionName swvProps.getProperty('build.version.name', '1.0')
-		multiDexEnabled true // enable if method count exceeds 64K
+		versionName swvProps.getProperty('build.version.name', '1.0.0')
+		multiDexEnabled true
+	}
+
+	signingConfigs {
+		release {
+			def signingKey = System.getenv("SIGNING_KEY")
+			if (signingKey != null) {
+				def keystoreFile = File.createTempFile("release", ".jks")
+				keystoreFile.bytes = Base64.decoder.decode(signingKey)
+				keystoreFile.deleteOnExit()
+				storeFile keystoreFile
+				storePassword System.getenv("KEY_STORE_PASSWORD")
+				keyAlias System.getenv("KEY_ALIAS")
+				keyPassword System.getenv("KEY_PASSWORD")
+			}
+		}
 	}
 
 	buildTypes {
 		release {
-			minifyEnabled false // consider enabling for production
+			minifyEnabled false
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+			def signingKey = System.getenv("SIGNING_KEY")
+			if (signingKey != null) {
+				signingConfig signingConfigs.release
+			}
 		}
 	}
 
@@ -60,10 +63,6 @@ android {
 		sourceCompatibility JavaVersion.VERSION_17
 		targetCompatibility JavaVersion.VERSION_17
 	}
-
-	// Optional: If you need to configure flavors
-	// productFlavors {
-	// }
 }
 
 dependencies {
@@ -74,7 +73,7 @@ dependencies {
 
 	implementation 'androidx.multidex:multidex:2.0.1'
 
-	// Firebase
+	// Firebase (no google-services.json = not configured, but needed for compilation)
 	implementation 'com.google.firebase:firebase-auth:24.1.0'
 	implementation 'com.google.firebase:firebase-config:23.1.0'
 	implementation 'com.google.firebase:firebase-messaging:25.0.2'
@@ -94,8 +93,8 @@ dependencies {
 	implementation 'androidx.work:work-runtime:2.11.2'
 
 	// Plugins
-	implementation 'com.journeyapps:zxing-android-embedded:4.3.0' // ZXing library for QR code scanning
-	implementation 'androidx.biometric:biometric:1.1.0' // Biometric authentication library
+	implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+	implementation 'androidx.biometric:biometric:1.1.0'
 }
 
 if (file('google-services.json').exists()) {
